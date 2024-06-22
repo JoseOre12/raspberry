@@ -47,20 +47,27 @@ def write_to_csv():
     csv_filename = "sensor_data.csv"
     fieldnames = ["Timestamp", "BMP280 Pressure (hPa)", "AHT10 Temperature (°C)", "AHT10 Humidity (%)"]
     
-    with open(csv_filename, mode='w', newline='') as csv_file:
-        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-        writer.writeheader()
+    while True:
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        with data_lock:
+            data_row = {
+                "Timestamp": timestamp,
+                "BMP280 Pressure (hPa)": f"{bmp280_pressure:.2f}" if bmp280_pressure is not None else "",
+                "AHT10 Temperature (°C)": f"{aht10_temperature:.2f}" if aht10_temperature is not None else "",
+                "AHT10 Humidity (%)": f"{aht10_humidity:.2f}" if aht10_humidity is not None else ""
+            }
         
-        while True:
-            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-            with data_lock:
-                writer.writerow({
-                    "Timestamp": timestamp,
-                    "BMP280 Pressure (hPa)": f"{bmp280_pressure:.2f}" if bmp280_pressure is not None else "",
-                    "AHT10 Temperature (°C)": f"{aht10_temperature:.2f}" if aht10_temperature is not None else "",
-                    "AHT10 Humidity (%)": f"{aht10_humidity:.2f}" if aht10_humidity is not None else ""
-                })
-            time.sleep(5)  # Adjust sleep time as needed
+        # Write data to CSV file
+        try:
+            with open(csv_filename, mode='a', newline='') as csv_file:
+                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                if csv_file.tell() == 0:
+                    writer.writeheader()
+                writer.writerow(data_row)
+        except Exception as e:
+            print(f"Error writing to CSV: {e}")
+        
+        time.sleep(5)  # Adjust sleep time as needed
 
 # Create threads for BMP280 pressure, AHT10 temperature/humidity, and CSV writing
 bmp280_thread = threading.Thread(target=read_bmp280_pressure)
