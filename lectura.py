@@ -54,11 +54,13 @@ aht10_thread.start()
 try:
     while True:
         with data_lock:
-            print(f"BMP280 - Temperature: {bmp280_temperature:.2f} °C, Pressure: {bmp280_pressure:.2f} hPa")
-            print(f"AHT10 - Temperature: {aht10_temperature:.2f} °C, Humidity: {aht10_humidity:.2f} %")
+            if bmp280_temperature is not None and bmp280_pressure is not None:
+                print(f"BMP280 - Temperature: {bmp280_temperature:.2f} °C, Pressure: {bmp280_pressure:.2f} hPa")
+            if aht10_temperature is not None and aht10_humidity is not None:
+                print(f"AHT10 - Temperature: {aht10_temperature:.2f} °C, Humidity: {aht10_humidity:.2f} %")
         time.sleep(5)  # Adjust sleep time as needed
 except KeyboardInterrupt:
     # Handle Ctrl+C gracefully to stop threads
     bmp280_thread.join()
     aht10_thread.join()
-    print("Threads stopped.")
+    print("\nThreads stopped.")
