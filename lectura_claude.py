@@ -1,35 +1,47 @@
 import time
-import board
-import adafruit_bmp280
-import adafruit_ahtx0
+from smbus2 import SMBus
 
-# Initialize I2C
-i2c = board.I2C()
+# I2C addresses
+BMP280_ADDR = 0x76  # or 0x77, check with i2cdetect -y 1
+AHT10_ADDR = 0x38
 
-# Initialize sensors
-bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c)
-aht10 = adafruit_ahtx0.AHTx0(i2c)
+# Initialize I2C bus
+bus = SMBus(1)  # 1 indicates /dev/i2c-1
 
-# Set up BMP280
-bmp280.sea_level_pressure = 1013.25  # Adjust this value based on your location
+def read_bmp280():
+    # This is a simplified reading process and may need adjustment
+    bus.write_byte_data(BMP280_ADDR, 0xF4, 0x27)
+    data = bus.read_i2c_block_data(BMP280_ADDR, 0xF7, 8)
+    pressure = ((data[0] << 16) | (data[1] << 8) | data[2]) / 256
+    return pressure
+
+def read_aht10():
+    # Trigger measurement
+    bus.write_i2c_block_data(AHT10_ADDR, 0xAC, [0x33, 0x00])
+    time.sleep(0.1)
+    
+    # Read data
+    data = bus.read_i2c_block_data(AHT10_ADDR, 0x00, 6)
+    
+    # Convert to temperature and humidity
+    humidity = ((data[1] << 12) | (data[2] << 4) | (data[3] >> 4)) * 100 / 0x100000
+    temperature = (((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5]) * 200.0 / 0x100000 - 50
+    
+    return temperature, humidity
 
 try:
     while True:
-        # Read data from BMP280
-        pressure = bmp280.pressure
-
-        # Read data from AHT10MOD
-        temperature = aht10.temperature
-        humidity = aht10.relative_humidity
-
-        # Print the data
+        pressure = read_bmp280()
+        temperature, humidity = read_aht10()
+        
         print(f"Pressure: {pressure:.2f} hPa")
         print(f"Temperature: {temperature:.2f} °C")
         print(f"Humidity: {humidity:.2f} %")
         print("------------------------")
-
-        # Wait for 1 second before the next reading
+        
         time.sleep(1)
 
 except KeyboardInterrupt:
     print("Data collection stopped by user.")
+finally:
+    bus.close()
