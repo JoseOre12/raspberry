@@ -33,19 +33,23 @@ if bmp280_initialized and aht10_initialized:
         f.write('Timestamp,Temperature (C),Humidity (%),Pressure (hPa)\n')
         
         while True:
-            # Read temperature, humidity, and pressure
-            temp_aht10 = aht10.temperature
-            humidity_aht10 = aht10.relative_humidity
-            pressure_bmp280 = bmp280.pressure
+            try:
+                # Read temperature, humidity, and pressure
+                temp_aht10 = aht10.temperature
+                humidity_aht10 = aht10.relative_humidity
+                pressure_bmp280 = bmp280.pressure
 
-            # Get current time
-            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+                # Get current time
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
-            # Write data to file
-            f.write(f'{timestamp},{temp_aht10:.2f},{humidity_aht10:.2f},{pressure_bmp280:.2f}\n')
+                # Write data to file
+                f.write(f'{timestamp},{temp_aht10:.2f},{humidity_aht10:.2f},{pressure_bmp280:.2f}\n')
 
-            # Print data to console
-            print(f'Time: {timestamp} - Temperature: {temp_aht10:.2f} C, Humidity: {humidity_aht10:.2f} %, Pressure: {pressure_bmp280:.2f} hPa')
+                # Print data to console
+                print(f'Time: {timestamp} - Temperature: {temp_aht10:.2f} C, Humidity: {humidity_aht10:.2f} %, Pressure: {pressure_bmp280:.2f} hPa')
+
+            except Exception as e:
+                print(f"Error reading sensor data: {e}")
 
             # Wait for 2 seconds before next reading
             time.sleep(2)
