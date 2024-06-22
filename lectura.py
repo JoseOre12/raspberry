@@ -1,4 +1,5 @@
 import threading
+import csv
 import time
 import board
 import busio
@@ -41,13 +42,35 @@ def read_aht10_data():
     except Exception as e:
         print(f"Failed to initialize AHT10: {e}")
 
-# Create threads for BMP280 pressure and AHT10 temperature/humidity
+# Function to write sensor data to CSV file
+def write_to_csv():
+    csv_filename = "sensor_data.csv"
+    fieldnames = ["Timestamp", "BMP280 Pressure (hPa)", "AHT10 Temperature (°C)", "AHT10 Humidity (%)"]
+    
+    with open(csv_filename, mode='w', newline='') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        while True:
+            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+            with data_lock:
+                writer.writerow({
+                    "Timestamp": timestamp,
+                    "BMP280 Pressure (hPa)": f"{bmp280_pressure:.2f}" if bmp280_pressure is not None else "",
+                    "AHT10 Temperature (°C)": f"{aht10_temperature:.2f}" if aht10_temperature is not None else "",
+                    "AHT10 Humidity (%)": f"{aht10_humidity:.2f}" if aht10_humidity is not None else ""
+                })
+            time.sleep(5)  # Adjust sleep time as needed
+
+# Create threads for BMP280 pressure, AHT10 temperature/humidity, and CSV writing
 bmp280_thread = threading.Thread(target=read_bmp280_pressure)
 aht10_thread = threading.Thread(target=read_aht10_data)
+csv_thread = threading.Thread(target=write_to_csv)
 
 # Start threads
 bmp280_thread.start()
 aht10_thread.start()
+csv_thread.start()
 
 # Main thread to print sensor data
 try:
@@ -62,4 +85,5 @@ except KeyboardInterrupt:
     # Handle Ctrl+C gracefully to stop threads
     bmp280_thread.join()
     aht10_thread.join()
+    csv_thread.join()
     print("\nThreads stopped.")
