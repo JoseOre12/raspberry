@@ -150,7 +150,12 @@ def write_to_csv():
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(ENCODER_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(CLOUDY_SUNNY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.add_event_detect(ENCODER_PIN, GPIO.FALLING, callback=pulse_callback)
+
+# Add event detection for the encoder pin
+try:
+    GPIO.add_event_detect(ENCODER_PIN, GPIO.FALLING, callback=pulse_callback)
+except RuntimeError as e:
+    print(f"Error adding event detection: {e}")
 
 # Create threads for sensor readings and CSV writing
 bmp280_thread = threading.Thread(target=read_bmp280_pressure)
