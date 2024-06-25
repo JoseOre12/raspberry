@@ -37,46 +37,55 @@ CIRCUMFERENCE = 2 * 3.14159 * RADIUS
 # Function to read BMP280 pressure data
 def read_bmp280_pressure():
     global bmp280_pressure
-    i2c = busio.I2C(board.SCL, board.SDA)
-    try:
-        bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c, address=0x77)
-        bmp280.sea_level_pressure = 1013.25
-        while True:
-            with data_lock:
-                bmp280_pressure = bmp280.pressure
-            time.sleep(2)
-    except Exception as e:
-        print(f"Failed to initialize BMP280: {e}")
+    while True:
+        try:
+            i2c = busio.I2C(board.SCL, board.SDA)
+            bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c, address=0x77)
+            bmp280.sea_level_pressure = 1013.25
+            print("BMP280 initialized successfully")
+            while True:
+                with data_lock:
+                    bmp280_pressure = bmp280.pressure
+                time.sleep(2)
+        except Exception as e:
+            print(f"Failed to initialize BMP280: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
 
 # Function to read AHT10 temperature and humidity data
 def read_aht10_data():
     global aht10_temperature, aht10_humidity
-    i2c = busio.I2C(board.SCL, board.SDA)
-    try:
-        aht10 = adafruit_ahtx0.AHTx0(i2c, address=0x38)
-        while True:
-            with data_lock:
-                aht10_temperature = aht10.temperature
-                aht10_humidity = aht10.relative_humidity
-            time.sleep(2)
-    except Exception as e:
-        print(f"Failed to initialize AHT10: {e}")
+    while True:
+        try:
+            i2c = busio.I2C(board.SCL, board.SDA)
+            aht10 = adafruit_ahtx0.AHTx0(i2c, address=0x38)
+            print("AHT10 initialized successfully")
+            while True:
+                with data_lock:
+                    aht10_temperature = aht10.temperature
+                    aht10_humidity = aht10.relative_humidity
+                time.sleep(2)
+        except Exception as e:
+            print(f"Failed to initialize AHT10: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
 
 # Function to read air quality data from ADS1115
 def read_air_quality():
     global air_quality
-    i2c = busio.I2C(board.SCL, board.SDA)
-    try:
-        ads = ADS.ADS1115(i2c)
-        chan = AnalogIn(ads, ADS.P0)
-        while True:
-            with data_lock:
-                air_quality = chan.voltage * 1000  # Convert to ppm, adjust as necessary
-            time.sleep(2)
-    except Exception as e:
-        print(f"Failed to initialize ADS1115: {e}")
+    while True:
+        try:
+            i2c = busio.I2C(board.SCL, board.SDA)
+            ads = ADS.ADS1115(i2c)
+            chan = AnalogIn(ads, ADS.P0)
+            print("ADS1115 initialized successfully")
+            while True:
+                with data_lock:
+                    air_quality = chan.voltage * 1000  # Convert to ppm, adjust as necessary
+                time.sleep(2)
+        except Exception as e:
+            print(f"Failed to initialize ADS1115: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
 
-# New function to count pulses for wind speed measurement
+# Function to count pulses for wind speed measurement
 def count_pulses(pin, duration):
     pulse_count = 0
     start_time = time.time()
