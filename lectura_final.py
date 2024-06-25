@@ -26,27 +26,20 @@ ENCODER_PIN = 17
 # Pin where the cloudy/sunny sensor is connected
 CLOUDY_SUNNY_PIN = 27
 
-# Time interval for measuring wind speed (in seconds)
-MEASURE_INTERVAL = 1
-
-# Radius of the anemometer in meters (you'll need to measure this)
-RADIUS = 0.03  # example radius
+# Configuration variables for wind speed measurement
+RADIUS = 0.03  # Radius of the anemometer in meters
+PULSES_PER_REVOLUTION = 20  # Number of pulses per revolution
+MEASURE_INTERVAL = 5  # Time interval for measuring wind speed (in seconds)
 
 # Calculate the circumference
 CIRCUMFERENCE = 2 * 3.14159 * RADIUS
-
-# Pulses per revolution (depends on your anemometer setup)
-PULSES_PER_REVOLUTION = 20  # example value, set according to your hardware
-
-# Global pulse counter
-pulse_count = 0
 
 # Function to read BMP280 pressure data
 def read_bmp280_pressure():
     global bmp280_pressure
     i2c = busio.I2C(board.SCL, board.SDA)
     try:
-        bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c, address=0x76)
+        bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c, address=0x77)
         bmp280.sea_level_pressure = 1013.25
         while True:
             with data_lock:
@@ -83,27 +76,32 @@ def read_air_quality():
     except Exception as e:
         print(f"Failed to initialize ADS1115: {e}")
 
-# Pulse detection callback function
-def pulse_callback(channel):
-    global pulse_count
-    pulse_count += 1
+# New function to count pulses for wind speed measurement
+def count_pulses(pin, duration):
+    pulse_count = 0
+    start_time = time.time()
+    
+    while time.time() - start_time < duration:
+        if GPIO.input(pin) == GPIO.LOW:
+            pulse_count += 1
+            # Wait for the signal to go high again
+            while GPIO.input(pin) == GPIO.LOW:
+                pass
+    
+    return pulse_count
 
 # Function to calculate wind speed
 def calculate_wind_speed(pulses, interval):
-    # Calculate revolutions
     revolutions = pulses / PULSES_PER_REVOLUTION
-    # Calculate distance covered (circumference * revolutions)
     distance = CIRCUMFERENCE * revolutions
-    # Wind speed (distance per time)
     wind_speed = distance / interval  # meters per second
     return wind_speed
 
 # Function to measure wind speed
 def measure_wind_speed():
-    global wind_speed, pulse_count
+    global wind_speed
     while True:
-        pulse_count = 0
-        time.sleep(MEASURE_INTERVAL)
+        pulse_count = count_pulses(ENCODER_PIN, MEASURE_INTERVAL)
         with data_lock:
             wind_speed = calculate_wind_speed(pulse_count, MEASURE_INTERVAL)
         print(f"Wind Speed: {wind_speed:.2f} m/s")
@@ -113,7 +111,7 @@ def read_cloudy_sunny():
     global cloudy_sunny
     while True:
         with data_lock:
-            cloudy_sunny = "Sunny" if GPIO.input(CLOUDY_SUNNY_PIN) else "Cloudy"
+            cloudy_sunny = 1 if GPIO.input(CLOUDY_SUNNY_PIN) else 0
         time.sleep(2)
 
 # Function to write sensor data to CSV file
@@ -151,12 +149,6 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(ENCODER_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(CLOUDY_SUNNY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-# Add event detection for the encoder pin
-try:
-    GPIO.add_event_detect(ENCODER_PIN, GPIO.FALLING, callback=pulse_callback)
-except RuntimeError as e:
-    print(f"Error adding event detection: {e}")
-
 # Create threads for sensor readings and CSV writing
 bmp280_thread = threading.Thread(target=read_bmp280_pressure)
 aht10_thread = threading.Thread(target=read_aht10_data)
@@ -190,11 +182,5 @@ try:
         time.sleep(5)  # Adjust sleep time as needed
 except KeyboardInterrupt:
     # Handle Ctrl+C gracefully to stop threads
-    bmp280_thread.join()
-    aht10_thread.join()
-    wind_speed_thread.join()
-    cloudy_sunny_thread.join()
-    air_quality_thread.join()
-    csv_thread.join()
     GPIO.cleanup()
     print("\nThreads stopped.")
