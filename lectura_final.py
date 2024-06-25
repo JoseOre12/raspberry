@@ -27,16 +27,16 @@ ENCODER_PIN = 17
 CLOUDY_SUNNY_PIN = 27
 
 # Time interval for measuring wind speed (in seconds)
-MEASURE_INTERVAL = 5
+MEASURE_INTERVAL = 1
 
 # Radius of the anemometer in meters (you'll need to measure this)
-RADIUS = 0.1  # example radius
+RADIUS = 0.03  # example radius
 
 # Calculate the circumference
 CIRCUMFERENCE = 2 * 3.14159 * RADIUS
 
 # Pulses per revolution (depends on your anemometer setup)
-PULSES_PER_REVOLUTION = 1  # example value, set according to your hardware
+PULSES_PER_REVOLUTION = 20  # example value, set according to your hardware
 
 # Global pulse counter
 pulse_count = 0
