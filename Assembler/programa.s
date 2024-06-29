@@ -6,6 +6,9 @@ head:
 
 .text
 _start:
+    // Inicializar x20 con la dirección de head
+    ldr x20, =head
+
     // Crear el primer nodo (valor 3)
     mov x0, 16         // Tamaño del nodo (8 bytes para valor, 8 bytes para puntero)
     mov x8, 214        // Número de syscall para brk (obtener/establecer el final del segmento de datos)
@@ -14,7 +17,7 @@ _start:
 
     mov x1, 3          // Valor del nodo
     str x1, [x19]      // Almacenar el valor en el nodo
-    ldr x1, head       // Cargar el valor actual de head
+    ldr x1, [x20]      // Cargar el valor actual de head
     str x1, [x19, 8]   // Almacenar el puntero al siguiente nodo (actualmente head)
     str x19, [x20]     // Actualizar head para que apunte al nuevo nodo
 
@@ -26,7 +29,7 @@ _start:
 
     mov x1, 2          // Valor del nodo
     str x1, [x19]      // Almacenar el valor en el nodo
-    ldr x1, head       // Cargar el valor actual de head
+    ldr x1, [x20]      // Cargar el valor actual de head
     str x1, [x19, 8]   // Almacenar el puntero al siguiente nodo (actualmente head)
     str x19, [x20]     // Actualizar head para que apunte al nuevo nodo
 
@@ -38,7 +41,7 @@ _start:
 
     mov x1, 1          // Valor del nodo
     str x1, [x19]      // Almacenar el valor en el nodo
-    ldr x1, head       // Cargar el valor actual de head
+    ldr x1, [x20]      // Cargar el valor actual de head
     str x1, [x19, 8]   // Almacenar el puntero al siguiente nodo (actualmente head)
     str x19, [x20]     // Actualizar head para que apunte al nuevo nodo
 
