@@ -48,12 +48,14 @@ assign_points:
     ldr x0, =points
     ldr x1, =centroids
     ldr x2, =clusters
-    ldr x3, num_points
+    ldr x3, =num_points
+    ldr x3, [x3]
     mov x4, #0  // Índice del punto actual
 
 assign_loop:
     // Cargar punto actual
-    ldp x5, x6, [x0, x4, lsl #4]
+    lsl x5, x4, #4
+    ldp x5, x6, [x0, x5]
     
     // Calcular distancia al primer centroide
     ldp x7, x8, [x1]
@@ -86,7 +88,8 @@ update_centroids:
     ldr x0, =points
     ldr x1, =centroids
     ldr x2, =clusters
-    ldr x3, num_points
+    ldr x3, =num_points
+    ldr x3, [x3]
     
     // Reiniciar centroides y contadores
     mov x4, xzr
@@ -100,7 +103,8 @@ update_centroids:
 
 update_loop:
     ldr x11, [x2, x10, lsl #3]  // Cargar cluster del punto
-    ldp x12, x13, [x0, x10, lsl #4]  // Cargar coordenadas del punto
+    lsl x12, x10, #4
+    ldp x12, x13, [x0, x12]  // Cargar coordenadas del punto
     
     cmp x11, #0
     b.ne second_centroid
