@@ -52,9 +52,9 @@ sum_loop:
 
 add_to_sum:
     // Agregar la suma parcial a la suma total
-    ldr x0, sum
+    ldr x0, [x21, sum]
     add x0, x0, x23
-    str x0, sum
+    str x0, [x21, sum]
 
     // Resetear la suma parcial
     mov x23, 0
@@ -62,12 +62,12 @@ add_to_sum:
 
 end_sum_loop:
     // Agregar la última suma parcial si no fue procesada
-    ldr x0, sum
+    ldr x0, [x21, sum]
     add x0, x0, x23
-    str x0, sum
+    str x0, [x21, sum]
 
     // Imprimir el resultado
-    ldr x0, sum
+    ldr x0, [x21, sum]
     bl print_number
 
     // Salir del programa
