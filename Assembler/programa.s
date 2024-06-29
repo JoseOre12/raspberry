@@ -1,85 +1,48 @@
-.section .data
-segmento:   .asciz "Segmento de datos\n"
-
-.section .bss
-head:       .long 0            @ Puntero al primer nodo de la lista
-
-.section .text
 .global _start
 
+.data
+head:
+    .quad 0  // Puntero al primer nodo, inicializado a 0 (NULL)
+
+.text
 _start:
-    @ Inicializar el puntero head a NULL (0)
-    mov x0, #0
-    str x0, [head]
+    // Crear el primer nodo (valor 3)
+    mov x0, 16         // Tamaño del nodo (8 bytes para valor, 8 bytes para puntero)
+    mov x8, 214        // Número de syscall para brk (obtener/establecer el final del segmento de datos)
+    svc 0              // Llamada al sistema
+    mov x19, x0        // Guardar la dirección del nuevo nodo en x19
 
-    @ Ingresar los valores [3, 2, 1] a la lista (simulando una pila)
-    mov x0, #3
-    bl insert_beginning
-    mov x0, #2
-    bl insert_beginning
-    mov x0, #1
-    bl insert_beginning
+    mov x1, 3          // Valor del nodo
+    str x1, [x19]      // Almacenar el valor en el nodo
+    ldr x1, head       // Cargar el valor actual de head
+    str x1, [x19, 8]   // Almacenar el puntero al siguiente nodo (actualmente head)
+    str x19, [x20]     // Actualizar head para que apunte al nuevo nodo
 
-    @ Imprimir la lista
-    bl print_list
-
-    @ Salir del programa
-    mov x8, 93          @ Código de salida (sys_exit)
-    mov x0, 0           @ Código de error (0)
+    // Crear el segundo nodo (valor 2)
+    mov x0, 16         // Tamaño del nodo
+    mov x8, 214        // Número de syscall para brk
     svc 0
+    mov x19, x0        // Guardar la dirección del nuevo nodo en x19
 
-@ Función para insertar un nuevo nodo al principio de la lista
-insert_beginning:
-    push {lr}           @ Guardar el registro de enlace (lr)
+    mov x1, 2          // Valor del nodo
+    str x1, [x19]      // Almacenar el valor en el nodo
+    ldr x1, head       // Cargar el valor actual de head
+    str x1, [x19, 8]   // Almacenar el puntero al siguiente nodo (actualmente head)
+    str x19, [x20]     // Actualizar head para que apunte al nuevo nodo
 
-    @ Llamar a malloc para reservar memoria para el nuevo nodo
-    mov x1, #8          @ Tamaño del nodo (4 bytes para el valor + 4 bytes para el puntero)
-    bl malloc           @ Llamar a la función malloc
+    // Crear el tercer nodo (valor 1)
+    mov x0, 16         // Tamaño del nodo
+    mov x8, 214        // Número de syscall para brk
+    svc 0
+    mov x19, x0        // Guardar la dirección del nuevo nodo en x19
 
-    @ Eax ahora contiene la dirección del nuevo nodo
-    mov x3, x0          @ Guardar en x3 para manipulación
+    mov x1, 1          // Valor del nodo
+    str x1, [x19]      // Almacenar el valor en el nodo
+    ldr x1, head       // Cargar el valor actual de head
+    str x1, [x19, 8]   // Almacenar el puntero al siguiente nodo (actualmente head)
+    str x19, [x20]     // Actualizar head para que apunte al nuevo nodo
 
-    @ Almacenar el valor en el nuevo nodo
-    str x0, [x3]        @ Guardar el valor en el campo 'valor'
-
-    @ Establecer el puntero al siguiente nodo (head)
-    ldr x0, [head]
-    str x0, [x3, #4]    @ El nuevo nodo apunta al nodo anterior 'head'
-
-    @ Actualizar head para que apunte al nuevo nodo
-    str x3, [head]
-
-    pop {lr}            @ Restaurar el registro de enlace
-    ret                 @ Volver
-
-@ Función para imprimir la lista
-print_list:
-    push {lr}           @ Guardar el registro de enlace (lr)
-
-    ldr x0, [head]
-    cmp x0, #0          @ Verificar si head es NULL
-    beq end_print       @ Si es NULL, la lista está vacía y terminar
-
-.print_loop:
-    @ Imprimir el valor del nodo actual
-    ldr x0, [x0]        @ Cargar el valor del nodo actual
-    ldr x1, =segmento
-    add x1, x1, x0      @ Preparar el puntero a la cadena para imprimir
-    bl printf           @ Llamar a printf para imprimir el valor
-
-    @ Mover al siguiente nodo
-    ldr x0, [x0, #4]    @ Cargar el puntero al siguiente nodo
-    cmp x0, #0
-    bne .print_loop     @ Si no es NULL, continuar imprimiendo
-
-.end_print:
-    pop {lr}            @ Restaurar el registro de enlace
-    ret                 @ Volver
-
-@ Función malloc para reservar memoria dinámica
-@ Implementación simple de malloc para este ejemplo
-malloc:
-    mov x8, #0          @ Código de llamada al sistema para brk (sys_brk)
-    svc 0               @ Llamar al sistema para incrementar el tamaño del espacio de datos
-
-    ret                 @ Retornar el nuevo puntero a la memoria
+    // Salir del programa
+    mov x0, 0          // Código de salida
+    mov x8, 93         // Número de syscall para exit
+    svc 0
