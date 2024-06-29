@@ -76,8 +76,31 @@ end_sum_loop:
 
 print_number:
     // Convertir el número a cadena y escribirlo en stdout
-    mov x1, x0                // Número a imprimir
-    mov x2, 10                // Base 10
+    mov x0, x1                // Número a imprimir
+    bl itoa                   // Llamar a la función itoa
+    ldr x1, =buffer           // Dirección del buffer con el número convertido
+    mov x2, #32               // Longitud máxima del número
     mov x8, 64                // sys_write
     svc 0
+    ret
+
+itoa:
+    // Convertir un número a cadena (itoa)
+    mov x2, x0                // Guardar el número original en x2
+    add x0, x1, #32           // Dirección del buffer + 32
+    mov x3, #0                // Contador de dígitos
+
+itoa_loop:
+    udiv x4, x2, #10          // Dividir el número por 10
+    msub x5, x4, x2, #10      // Calcular el residuo
+    add x5, x5, #48           // Convertir el residuo a carácter ASCII
+    strb w5, [x0, -1]!        // Almacenar el carácter en el buffer
+    mov x2, x4                // Actualizar el número
+    add x3, x3, #1            // Incrementar el contador de dígitos
+    cmp x2, #0                // Comparar con 0
+    b.ne itoa_loop            // Si no es 0, continuar
+
+    // Invertir la cadena
+    mov x1, x0                // Dirección del buffer
+    sub x1, x1, x3            // Ajustar la dirección al inicio de la cadena
     ret
