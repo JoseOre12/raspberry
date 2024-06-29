@@ -92,13 +92,13 @@ itoa:
     mov x3, #0                // Contador de dígitos
 
 itoa_loop:
-    udiv x4, x2, 10           // Dividir el número por 10
+    udiv x4, x2, x1           // Dividir el número por 10
     msub x5, x2, x4, x4, 10   // Calcular el residuo (residuo = x2 - (x4 * 10))
-    add x5, x5, #48           // Convertir el residuo a carácter ASCII
+    add x5, x5, 48            // Convertir el residuo a carácter ASCII
     strb w5, [x0, -1]!        // Almacenar el carácter en el buffer
     mov x2, x4                // Actualizar el número
-    add x3, x3, #1            // Incrementar el contador de dígitos
-    cmp x2, #0                // Comparar con 0
+    add x3, x3, 1             // Incrementar el contador de dígitos
+    cmp x2, 0                 // Comparar con 0
     b.ne itoa_loop            // Si no es 0, continuar
 
     // Invertir la cadena
