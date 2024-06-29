@@ -93,7 +93,7 @@ itoa:
 
 itoa_loop:
     udiv x4, x2, x1           // Dividir el número por 10
-    msub x5, x2, x4, x4, 10   // Calcular el residuo (residuo = x2 - (x4 * 10))
+    msub x5, x2, x4, x1, 10   // Calcular el residuo (residuo = x2 - (x4 * 10))
     add x5, x5, 48            // Convertir el residuo a carácter ASCII
     strb w5, [x0, -1]!        // Almacenar el carácter en el buffer
     mov x2, x4                // Actualizar el número
