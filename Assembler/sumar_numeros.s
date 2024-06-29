@@ -11,7 +11,7 @@ sum:        .quad 0           // Variable para la suma
 
 _start:
     // Abrir el archivo
-    mov x0, filename          // Nombre del archivo
+    ldr x0, =filename         // Nombre del archivo
     mov x1, 0                 // O_RDONLY
     mov x8, 56                // sys_open
     svc 0
@@ -19,15 +19,15 @@ _start:
 
     // Leer el archivo en el buffer
     mov x0, x19               // File descriptor
-    mov x1, buffer            // Dirección del buffer
+    ldr x1, =buffer           // Dirección del buffer
     mov x2, 1024              // Tamaño del buffer
     mov x8, 63                // sys_read
     svc 0
     mov x20, x0               // Guardar el número de bytes leídos
 
     // Inicializar punteros y la suma
-    mov x21, buffer           // Puntero al inicio del buffer
-    mov x22, buffer           // Puntero para recorrer el buffer
+    ldr x21, =buffer          // Puntero al inicio del buffer
+    mov x22, x21              // Puntero para recorrer el buffer
     mov x23, 0                // Variable para la suma parcial
 
 sum_loop:
@@ -45,8 +45,8 @@ sum_loop:
 
     // Convertir el carácter ASCII a número y agregar a la suma parcial
     sub w0, w0, 48
-    mul x23, x23, 10          // Multiplicar por 10 la suma parcial
-    add x23, x23, x0          // Agregar el dígito a la suma parcial
+    mul x23, x23, x23, lsl #3   // Multiplicar por 10 la suma parcial (x23 = x23 * 8 + x23 * 2)
+    add x23, x23, x0            // Agregar el dígito a la suma parcial
     b sum_loop
 
 add_to_sum:
@@ -76,7 +76,7 @@ end_sum_loop:
 
 print_number:
     // Convertir el número a cadena y escribirlo en stdout
-    mov x0, x1                // Número a imprimir
+    mov x1, x0                // Número a imprimir
     bl itoa                   // Llamar a la función itoa
     ldr x1, =buffer           // Dirección del buffer con el número convertido
     mov x2, #32               // Longitud máxima del número
@@ -91,8 +91,8 @@ itoa:
     mov x3, #0                // Contador de dígitos
 
 itoa_loop:
-    udiv x4, x2, #10          // Dividir el número por 10
-    msub x5, x4, x2, #10      // Calcular el residuo
+    udiv x4, x2, 10           // Dividir el número por 10
+    msub x5, x4, x4, x2, 10   // Calcular el residuo
     add x5, x5, #48           // Convertir el residuo a carácter ASCII
     strb w5, [x0, -1]!        // Almacenar el carácter en el buffer
     mov x2, x4                // Actualizar el número
