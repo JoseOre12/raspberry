@@ -45,15 +45,16 @@ sum_loop:
 
     // Convertir el carácter ASCII a número y agregar a la suma parcial
     sub w0, w0, 48
-    mul x23, x23, 10          // Multiplicar por 10 la suma parcial
+    mov x1, 10
+    mul x23, x23, x1          // Multiplicar por 10 la suma parcial
     add x23, x23, x0          // Agregar el dígito a la suma parcial
     b sum_loop
 
 add_to_sum:
     // Agregar la suma parcial a la suma total
-    ldr x0, [x21, sum]
+    ldr x0, sum
     add x0, x0, x23
-    str x0, [x21, sum]
+    str x0, sum
 
     // Resetear la suma parcial
     mov x23, 0
@@ -61,12 +62,12 @@ add_to_sum:
 
 end_sum_loop:
     // Agregar la última suma parcial si no fue procesada
-    ldr x0, [x21, sum]
+    ldr x0, sum
     add x0, x0, x23
-    str x0, [x21, sum]
+    str x0, sum
 
     // Imprimir el resultado
-    ldr x0, [x21, sum]
+    ldr x0, sum
     bl print_number
 
     // Salir del programa
@@ -92,7 +93,7 @@ itoa:
 
 itoa_loop:
     udiv x4, x2, 10           // Dividir el número por 10
-    msub x5, x5, x4, x2, 10   // Calcular el residuo
+    msub x5, x2, x4, x4, 10   // Calcular el residuo (residuo = x2 - (x4 * 10))
     add x5, x5, #48           // Convertir el residuo a carácter ASCII
     strb w5, [x0, -1]!        // Almacenar el carácter en el buffer
     mov x2, x4                // Actualizar el número
